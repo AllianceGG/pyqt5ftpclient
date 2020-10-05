@@ -1,0 +1,12 @@
+Dependency:
+    pyqt5
+
+Usage:
+    1. Create a json file "ftp.json":
+        {
+            "addr": "ftp.example.com",
+            "username": "alice",
+            "password": "alice_password",
+            "encoding": "gbk"
+        }
+    2. `python main.py ftp.json`
