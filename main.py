@@ -74,9 +74,7 @@ class Demo(QWidget):
         self.ftp_view.setSortingEnabled(True)
         self.ftp_view.doubleClicked.connect(self.ftp_double_clicked)
 
-        self.ftp_path_view = QLabel(self.ftp_model.ftp_mgr.ftp_pwd, self)
-
-        self.ftp_path_edit = QLineEdit(self.ftp_model.ftp_mgr.ftp_pwd)
+        self.ftp_path_edit = QLineEdit(self.ftp_model.ftp_mgr.ftp_pwd, self)
         self.ftp_path_edit.returnPressed.connect(self.ftp_change_path_lineedit)
 
         # Set up layout
@@ -85,8 +83,7 @@ class Demo(QWidget):
         ftp_v_layout = QVBoxLayout()
         ftp_top_layout = QGridLayout()
         ftp_top_layout.addWidget(self.ftp_par_btn, 0, 0)
-        ftp_top_layout.addWidget(self.ftp_path_view, 0, 1, 1, 15)
-        ftp_top_layout.addWidget(self.ftp_path_edit, 0, 1, 1, 10)
+        ftp_top_layout.addWidget(self.ftp_path_edit, 0, 1, 1, 15)
         ftp_top_layout.addWidget(self.ftp_dl_btn, 0, 16)
         ftp_v_layout.addLayout(ftp_top_layout)
         ftp_v_layout.addWidget(self.ftp_view)
@@ -99,8 +96,6 @@ class Demo(QWidget):
         h_layout.addLayout(local_v_layout)
         self.setLayout(h_layout)
         self.resize(2000, 1800)
-
-
 
     @pyqtSlot()
     def local_change_path_lineedit(self):
@@ -142,7 +137,6 @@ class Demo(QWidget):
             if item_0.siblingAtColumn(1).data() == 'dir':
                 self.ftp_model.ftp_mgr.do_cwd(item_0.data())
                 self.ftp_model.refresh()
-                self.ftp_path_view.setText(self.ftp_model.ftp_mgr.ftp_pwd)
                 self.ftp_path_edit.setText(self.ftp_model.ftp_mgr.ftp_pwd)
 
     @pyqtSlot()
@@ -152,8 +146,8 @@ class Demo(QWidget):
         if self.ftp_model.ftp_mgr.ftp_pwd == old_dir:  # early exit if no real change
             return
         self.ftp_model.refresh()
-        self.ftp_path_view.setText(self.ftp_model.ftp_mgr.ftp_pwd)
         self.ftp_path_edit.setText(self.ftp_model.ftp_mgr.ftp_pwd)
+
     @pyqtSlot()
     def ftp_dl(self):
         for row in {i.row() for i in self.ftp_view.selectedIndexes()}:
@@ -165,19 +159,16 @@ class Demo(QWidget):
     def ftp_change_path_lineedit(self):
         """ Change ftp path by user input from QLineEdit """
         new_path = self.ftp_path_edit.text()
-        old_path = self.ftp_path_view.text()
-        if new_path == old_path:
-            return
+        old_path = self.ftp_model.ftp_mgr.ftp_pwd
         try:
             self.ftp_model.ftp_mgr.do_cwd(new_path)
             self.ftp_model.refresh()
-            self.ftp_path_view.setText(new_path)
-            self.ftp_path_edit.setText(new_path)
-        except:
+        except Exception as err:
+            print('[ERR] cannot change ftp path to', new_path, ':', err)
             self.ftp_model.ftp_mgr.do_cwd(old_path)
             self.ftp_model.refresh()
-            self.ftp_path_view.setText(old_path)
             self.ftp_path_edit.setText(old_path)
+            self.ftp_model.ftp_mgr.ftp_pwd = old_path
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
