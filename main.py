@@ -40,6 +40,7 @@ class FTPTableModel(QAbstractTableModel):
         self.layoutAboutToBeChanged.emit()
         self.ftp_content_list = self.get_ftp_list()
         self.dataChanged.emit(QModelIndex(), QModelIndex())
+        self.layoutChanged.emit()
 
 
 class Demo(QWidget):
