@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QLabel,
                              QFileSystemModel,
                              QHBoxLayout, QVBoxLayout, QGridLayout)
 from PyQt5.QtCore import Qt, pyqtSlot, QModelIndex, QAbstractTableModel
-from PyQt5.QtGui import QColor, QStandardItemModel
+from PyQt5.QtGui import QColor, QStandardItemModel, QIcon
 from ftpmgr import FTPMgr
 
 
@@ -16,6 +16,9 @@ class FTPTableModel(QAbstractTableModel):
         self.ftp_mgr = FTPMgr.from_json(json_file_path)
         self.ftp_col_num = len(FTPMgr.attribs) + 1
         self.ftp_content_list = self.get_ftp_list()
+        self.icon_dict = {
+            'dir': QIcon(join(parent.local_path, 'assets/d.png')),
+            'file': QIcon(join(parent.local_path, 'assets/f.png'))}
 
     def get_ftp_list(self):
         return [(name, *(facts.get(attrib, '') for attrib in FTPMgr.attribs))
@@ -24,6 +27,8 @@ class FTPTableModel(QAbstractTableModel):
     def data(self, index, role):
         if role == Qt.DisplayRole:
             return self.ftp_content_list[index.row()][index.column()]
+        if role == Qt.DecorationRole and index.column() == 0:
+            return self.icon_dict.get(self.ftp_content_list[index.row()][1], None)
 
     def rowCount(self, index):
         return len(self.ftp_content_list)
