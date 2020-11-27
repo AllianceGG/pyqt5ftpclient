@@ -3,7 +3,7 @@ from os.path import abspath, dirname, isdir, join
 from PyQt5.QtWidgets import (QApplication, QWidget, QLabel,
                              QAbstractItemView, QTableView, QListView,
                              QLineEdit, QPushButton,
-                             QFileSystemModel,
+                             QFileSystemModel, QComboBox,
                              QHBoxLayout, QVBoxLayout, QGridLayout)
 from PyQt5.QtCore import Qt, pyqtSlot, QModelIndex, QAbstractTableModel
 from PyQt5.QtGui import QColor, QStandardItemModel, QIcon
@@ -17,8 +17,8 @@ class FTPTableModel(QAbstractTableModel):
         self.ftp_col_num = len(FTPMgr.attribs) + 1
         self.ftp_content_list = self.get_ftp_list()
         self.icon_dict = {
-            'dir': QIcon(join(parent.local_path, 'assets/d.png')),
-            'file': QIcon(join(parent.local_path, 'assets/f.png'))}
+            'dir': QIcon(join(parent.local_path, 'assets/fancy/d.png')),
+            'file': QIcon(join(parent.local_path, 'assets/fancy/f.png'))}
 
     def get_ftp_list(self):
         return [(name, *(facts.get(attrib, '') for attrib in FTPMgr.attribs))
@@ -83,13 +83,18 @@ class Demo(QWidget):
         self.ftp_path_edit = QLineEdit(self.ftp_model.ftp_mgr.ftp_pwd, self)
         self.ftp_path_edit.returnPressed.connect(self.ftp_change_path_lineedit)
 
+        self.ftp_icon_toggle_box = QComboBox(self)
+        self.ftp_icon_toggle_box.addItems(['fancy', 'simple'])
+        self.ftp_icon_toggle_box.currentIndexChanged.connect(self.ftp_icon_style_toggle)
+
         # Set up layout
         h_layout = QHBoxLayout()
         # left half for ftp
         ftp_v_layout = QVBoxLayout()
         ftp_top_layout = QGridLayout()
         ftp_top_layout.addWidget(self.ftp_par_btn, 0, 0)
-        ftp_top_layout.addWidget(self.ftp_path_edit, 0, 1, 1, 15)
+        ftp_top_layout.addWidget(self.ftp_path_edit, 0, 1, 1, 14)
+        ftp_top_layout.addWidget(self.ftp_icon_toggle_box, 0, 15)
         ftp_top_layout.addWidget(self.ftp_dl_btn, 0, 16)
         ftp_v_layout.addLayout(ftp_top_layout)
         ftp_v_layout.addWidget(self.ftp_view)
@@ -175,6 +180,22 @@ class Demo(QWidget):
             self.ftp_model.refresh()
             self.ftp_path_edit.setText(old_path)
             self.ftp_model.ftp_mgr.ftp_pwd = old_path
+
+    @pyqtSlot()
+    def ftp_icon_style_toggle(self):
+        style = self.ftp_icon_toggle_box.currentText()
+        if style == 'fancy':
+            self.ftp_model.icon_dict = {
+                'dir': QIcon(join(self.local_path, 'assets/fancy/d.png')),
+                'file': QIcon(join(self.local_path, 'assets/fancy/f.png'))}
+            print('fancy icon style changed')
+        if style == 'simple':
+            self.ftp_model.icon_dict = {
+                'dir': QIcon(join(self.local_path, 'assets/simple/d.png')),
+                'file': QIcon(join(self.local_path, 'assets/simple/f.png'))}
+            print('simple icon style changed')
+        self.ftp_model.refresh()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
