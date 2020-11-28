@@ -47,6 +47,11 @@ class FTPTableModel(QAbstractTableModel):
         self.dataChanged.emit(QModelIndex(), QModelIndex())
         self.layoutChanged.emit()
 
+    def refresh_no_ftp_fetch(self):
+        self.layoutAboutToBeChanged.emit()
+        self.dataChanged.emit(QModelIndex(), QModelIndex())
+        self.layoutChanged.emit()
+
 
 class Demo(QWidget):
     def __init__(self, json_file_path):
@@ -194,7 +199,7 @@ class Demo(QWidget):
                 'dir': QIcon(join(self.local_path, 'assets/simple/d.png')),
                 'file': QIcon(join(self.local_path, 'assets/simple/f.png'))}
             print('simple icon style changed')
-        self.ftp_model.refresh()
+        self.ftp_model.refresh_no_ftp_fetch()
 
 
 if __name__ == '__main__':
