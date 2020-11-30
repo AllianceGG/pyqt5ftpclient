@@ -47,11 +47,6 @@ class FTPTableModel(QAbstractTableModel):
         self.dataChanged.emit(QModelIndex(), QModelIndex())
         self.layoutChanged.emit()
 
-    def refresh_no_ftp_fetch(self):
-        self.layoutAboutToBeChanged.emit()
-        self.dataChanged.emit(QModelIndex(), QModelIndex())
-        self.layoutChanged.emit()
-
 
 class Demo(QWidget):
     def __init__(self, json_file_path):
@@ -191,15 +186,15 @@ class Demo(QWidget):
         style = self.ftp_icon_toggle_box.currentText()
         if style == 'fancy':
             self.ftp_model.icon_dict = {
-                'dir': QIcon(join(self.local_path, 'assets/fancy/d.png')),
-                'file': QIcon(join(self.local_path, 'assets/fancy/f.png'))}
-            print('fancy icon style changed')
+                'dir': QIcon('./assets/fancy/d.png'),
+                'file': QIcon('./assets/fancy/f.png')}
+            print(style, 'icon style changed')
         if style == 'simple':
             self.ftp_model.icon_dict = {
-                'dir': QIcon(join(self.local_path, 'assets/simple/d.png')),
-                'file': QIcon(join(self.local_path, 'assets/simple/f.png'))}
-            print('simple icon style changed')
-        self.ftp_model.refresh_no_ftp_fetch()
+                'dir': QIcon('./assets/simple/d.png'),
+                'file': QIcon('./assets/simple/f.png')}
+            print(style, 'icon style changed')
+        self.ftp_model.layoutChanged.emit()
 
 
 if __name__ == '__main__':
