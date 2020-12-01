@@ -2,12 +2,12 @@ import sys
 from os.path import abspath, dirname, isdir, join
 from PyQt5.QtWidgets import (QApplication, QWidget, QLabel,
                              QAbstractItemView, QTableView, QListView,
-                             QLineEdit, QPushButton,
-                             QFileSystemModel, QComboBox,
+                             QLineEdit, QPushButton, QComboBox,
+                             QFileSystemModel,
                              QHBoxLayout, QVBoxLayout, QGridLayout)
 from PyQt5.QtCore import Qt, pyqtSlot, QModelIndex, QAbstractTableModel
-from PyQt5.QtGui import QColor, QStandardItemModel, QIcon
 from ftpmgr import FTPMgr
+from iconmgr import IconMgr
 
 
 class FTPTableModel(QAbstractTableModel):
@@ -16,9 +16,7 @@ class FTPTableModel(QAbstractTableModel):
         self.ftp_mgr = FTPMgr.from_json(json_file_path)
         self.ftp_col_num = len(FTPMgr.attribs) + 1
         self.ftp_content_list = self.get_ftp_list()
-        self.icon_dict = {
-            'dir': QIcon(join(parent.local_path, 'assets/fancy/d.png')),
-            'file': QIcon(join(parent.local_path, 'assets/fancy/f.png'))}
+        self.icon_mgr = IconMgr(parent.local_path)
 
     def get_ftp_list(self):
         return [(name, *(facts.get(attrib, '') for attrib in FTPMgr.attribs))
@@ -28,7 +26,7 @@ class FTPTableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return self.ftp_content_list[index.row()][index.column()]
         if role == Qt.DecorationRole and index.column() == 0:
-            return self.icon_dict.get(self.ftp_content_list[index.row()][1], None)
+            return self.icon_mgr.get(self.ftp_content_list[index.row()][1])
 
     def rowCount(self, index):
         return len(self.ftp_content_list)
@@ -41,10 +39,11 @@ class FTPTableModel(QAbstractTableModel):
         self.ftp_content_list.sort(key=lambda e: e[col], reverse=order != Qt.AscendingOrder)
         self.dataChanged.emit(QModelIndex(), QModelIndex())
 
-    def refresh(self):
+    def refresh(self, refresh_content=True):
         self.layoutAboutToBeChanged.emit()
-        self.ftp_content_list = self.get_ftp_list()
-        self.dataChanged.emit(QModelIndex(), QModelIndex())
+        if refresh_content:
+            self.ftp_content_list = self.get_ftp_list()
+            self.dataChanged.emit(QModelIndex(), QModelIndex())
         self.layoutChanged.emit()
 
 
@@ -84,8 +83,9 @@ class Demo(QWidget):
         self.ftp_path_edit.returnPressed.connect(self.ftp_change_path_lineedit)
 
         self.ftp_icon_toggle_box = QComboBox(self)
-        self.ftp_icon_toggle_box.addItems(['fancy', 'simple'])
-        self.ftp_icon_toggle_box.currentIndexChanged.connect(self.ftp_icon_style_toggle)
+        self.ftp_icon_toggle_box.addItems(self.ftp_model.icon_mgr.scheme_enum)
+        self.ftp_icon_toggle_box.setCurrentText(self.ftp_model.icon_mgr.scheme_ptr)
+        self.ftp_icon_toggle_box.currentTextChanged.connect(self.ftp_icon_toggle)
 
         # Set up layout
         h_layout = QHBoxLayout()
@@ -93,9 +93,12 @@ class Demo(QWidget):
         ftp_v_layout = QVBoxLayout()
         ftp_top_layout = QGridLayout()
         ftp_top_layout.addWidget(self.ftp_par_btn, 0, 0)
-        ftp_top_layout.addWidget(self.ftp_path_edit, 0, 1, 1, 14)
-        ftp_top_layout.addWidget(self.ftp_icon_toggle_box, 0, 15)
+        ftp_top_layout.addWidget(self.ftp_path_edit, 0, 1, 1, 15)
         ftp_top_layout.addWidget(self.ftp_dl_btn, 0, 16)
+        if self.ftp_model.icon_mgr.scheme_ptr:
+            ftp_top_layout.addWidget(self.ftp_icon_toggle_box, 0, 17)
+        else:
+            self.ftp_icon_toggle_box.setVisible(False)
         ftp_v_layout.addLayout(ftp_top_layout)
         ftp_v_layout.addWidget(self.ftp_view)
         # right half for local fs
@@ -181,20 +184,10 @@ class Demo(QWidget):
             self.ftp_path_edit.setText(old_path)
             self.ftp_model.ftp_mgr.ftp_pwd = old_path
 
-    @pyqtSlot()
-    def ftp_icon_style_toggle(self):
-        style = self.ftp_icon_toggle_box.currentText()
-        if style == 'fancy':
-            self.ftp_model.icon_dict = {
-                'dir': QIcon('./assets/fancy/d.png'),
-                'file': QIcon('./assets/fancy/f.png')}
-            print(style, 'icon style changed')
-        if style == 'simple':
-            self.ftp_model.icon_dict = {
-                'dir': QIcon('./assets/simple/d.png'),
-                'file': QIcon('./assets/simple/f.png')}
-            print(style, 'icon style changed')
-        self.ftp_model.layoutChanged.emit()
+    @pyqtSlot(str)
+    def ftp_icon_toggle(self, icon_style):
+        self.ftp_model.icon_mgr.switch_scheme(icon_style)
+        self.ftp_model.refresh(False)
 
 
 if __name__ == '__main__':
